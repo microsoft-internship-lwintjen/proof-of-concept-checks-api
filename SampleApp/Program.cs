@@ -7,6 +7,7 @@ namespace SampleApp
 {
     class Program
     {
+        // Method to find a repository in an array of repositories based on the name 
         static Repository findRepository(string repoName, IReadOnlyList<Repository> repositories)
         {
             foreach (var repo in repositories)
