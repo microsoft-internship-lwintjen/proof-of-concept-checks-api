@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.IO;
 using Octokit;
 namespace SampleApp
 {
@@ -11,11 +12,18 @@ namespace SampleApp
             //github.Check.Suite.Create()
             string tokenPath = @"C:\Windows\System\.env";
             DotNetEnv.Env.Load(tokenPath);
-            string token = DotNetEnv.Env.GetString("API_GH_PERSONAL_TOKEN", "Variable not found");
-            if (token.CompareTo("Variable not found") == 0)
+            try
             {
-                Console.WriteLine("The github token was not found in your .env file, please make sure that the key 'API_GH_PERSONAL_TOKEN' is set in your .env file (C:\\Windows\\System\\.env) ");
+                string token = DotNetEnv.Env.GetString("API_GH_PERSONAL_TOKEN", "Variable not found");
+                if (token.CompareTo("Variable not found") == 0)
+                {
+                    throw new FileNotFoundException("The github token was not found in your .env file, please make sure that the key 'API_GH_PERSONAL_TOKEN' is set in your .env file (C:\\Windows\\System\\.env)");
+                }
+            } catch (FileNotFoundException e)
+            {
+                Console.WriteLine(e);
                 Environment.Exit(0);
+
             }
 
         }
