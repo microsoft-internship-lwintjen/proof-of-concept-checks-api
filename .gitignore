@@ -338,3 +338,7 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# Ignore pem keys
+checks-api-app.2020-07-02.private-key.pem
+checks-api.2020-07-02.private-key.pem
