@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 using Octokit;
 namespace SampleApp
@@ -12,7 +13,7 @@ namespace SampleApp
         {
             foreach (var repo in repositories)
             {
-                if (repo.Name == repoName)
+                if (repo.Name.CompareTo(repoName) == 0)
                 {
                     return repo;
                 }
@@ -20,6 +21,18 @@ namespace SampleApp
             return null;
         }
 
+        // Method to find a pull request in an array of pull requests based on the name 
+        static PullRequest findPR(string PRName, IReadOnlyList<PullRequest> pullRequests)
+        {
+            foreach (var PR in pullRequests)
+            {
+                if (PR.Title.CompareTo(PRName) == 0)
+                {
+                    return PR;
+                }
+            }
+            return null;
+        }
         static async Task Main(string[] args)
         {
             var client = new GitHubClient(new ProductHeaderValue("SampleApp"));
@@ -30,10 +43,6 @@ namespace SampleApp
             try
             {
                 string token = DotNetEnv.Env.GetString("API_GH_PERSONAL_TOKEN", "Variable not found");
-                if (token.CompareTo("Variable not found") == 0)
-                {
-                    throw new FileNotFoundException("The github token was not found in your .env file, please make sure that the key 'API_GH_PERSONAL_TOKEN' is set in your .env file (C:\\Windows\\System\\.env)");
-                }
 
                 Console.WriteLine("Token found, setting up the token...");
 
@@ -47,7 +56,16 @@ namespace SampleApp
                 Console.Write("Please, enter the name of the organization you want to find the PR in : ");
                 string orgName = Console.ReadLine();
 
-                var org = await client.Organization.Get(orgName);
+                var org = new Organization();
+                try
+                {
+                    org = await client.Organization.Get(orgName);
+                } catch (NotFoundException e)
+                {
+                    Console.WriteLine("Couldn't find any matching organization with that name");
+                    Environment.Exit(0);
+                }
+
                 var repoOrg = await client.Repository.GetAllForOrg(org.Login);
 
 
@@ -67,19 +85,24 @@ namespace SampleApp
                 // Keep asking for a valid input if we don't find any matching repo in the given org
                 while (repo == null)
                 {
-                    Console.WriteLine("We couldn't find any matching repository in " + orgName + " organization, please re-enter you repository name.");
+                    Console.WriteLine($"We couldn't find any matching repository in {orgName} organization, please re-enter you repository name.");
                     Console.WriteLine("If you wan't to leave the program, please type in 'Exit'");
-                    string rName = Console.ReadLine();
-                    if (rName.CompareTo("Exit") == 0)
+                    repoName = Console.ReadLine();
+                    if (repoName.CompareTo("Exit") == 0)
                     {
                         Environment.Exit(0);
                     }
-                    repo = findRepository(rName, repoOrg);
+                    repo = findRepository(repoName, repoOrg);
                 }
 
+                Console.Write($"Please, enter the id of the PR in {repoName} (you'll find it in the url of the PR '/pull/[id]') : ");
+                int PRId = Convert.ToInt32(Console.ReadLine());
 
-                // TODO: Now find the given PR then create a check for it
-                Console.WriteLine("repo " + repo.FullName);
+                var AllPRs = await client.PullRequest.GetAllForRepository(repo.Id);
+
+                PullRequest PR = AllPRs[PRId - 1];
+
+                Console.WriteLine(PR.Title);
                 //client.Check.Suite.Create(user.Login,)
 
 
