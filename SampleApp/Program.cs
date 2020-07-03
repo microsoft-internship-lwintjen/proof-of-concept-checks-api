@@ -122,35 +122,64 @@ namespace SampleApp
 
             PullRequest PR = AllPRs[PRId - 1];
 
-            // it automatically creates a check suite when we create a check run so we dont need to do it ourselves
-            //var newCheckSuite = new NewCheckSuite(PR.Head.Sha);
-            //var CS = await client.Check.Suite.Create(repo.Id, newCheckSuite);
-
-            var CS = await client.Check.Suite.GetAllForReference(repo.Id, PR.Head.Sha);
-
-            Console.WriteLine(CS.TotalCount);
-
-            var newCheckRun = new NewCheckRun("sample check run", PR.Head.Sha);
-            
-            var CR = await client.Check.Run.Create(repo.Id, newCheckRun);
-            
-            string currentStatus = CR.Status.StringValue;
-            
-            Console.WriteLine("Check run created, please wait while your check run has been processed");
-
-            while (CR.Status.StringValue.CompareTo("completed") != 0)
+            while (true)
             {
-                CR = await client.Check.Run.Get(repo.Id, CR.Id);
-                Console.WriteLine(CR.Status.StringValue);
-                if (CR.Status.StringValue.CompareTo(currentStatus) != 0)
+                Console.WriteLine("What do you want to do (type in the number of the action) ?\n " +
+                    "1. Create a new check run \n " +
+                    "2. Update an existing check run \n " +
+                    "3. Leave the program");
+                string action = Console.ReadLine();
+
+                // Creating a new CR
+                if (action.CompareTo("1") == 0)
                 {
-                    currentStatus = CR.Status.StringValue;
+                    Console.Write("Please type in the name of your check run : ");
+                    string CRName = Console.ReadLine();
+
+                    var newCheckRun = new NewCheckRun(CRName, PR.Head.Sha);
+                    var CR = await client.Check.Run.Create(repo.Id, newCheckRun);
+
+                }
+
+                // Updating an existing one
+                else if (action.CompareTo("2") == 0)
+                {
+                    var CRUpdate = new CheckRunUpdate();
+
+                    Console.Write("Type in the id of the CR ('/pull/[pull_request_id]/checks?check_run_id=[check_run_id]') : ");
+                    long CRId = long.Parse(Console.ReadLine());
+
+                    Console.Write("Please, type in the status (queued, in_progress, completed) of check run {0} : ", CRId );
+                    string status = Console.ReadLine();
+
+                    CRUpdate.Status = status;
+                    
+                    // if completed then need extra infos
+                    if (status.CompareTo("completed") == 0)
+                    {
+                        Console.Write("Result of the check (success, failure, neutral, cancelled, timed_out, action_required) : ");
+                        string checkRunResult = Console.ReadLine();
+
+                        DateTime now = DateTime.Now;
+
+                        CRUpdate.Conclusion = checkRunResult;
+                        CRUpdate.CompletedAt = now;
+
+                    }
+
+                    await client.Check.Run.Update(repo.Id, CRId, CRUpdate);
+
+                    Console.WriteLine("The check run {0} has been {1}", CRId, status);
+                }
+
+                // Leaving the program
+                else if (action.CompareTo("3") == 0)
+                {
+                    Console.WriteLine("Thanks for using the program, exiting...");
+                    Environment.Exit(0);
                 }
             }
 
-            Console.WriteLine("The check run has been processed");
-
-            // TO DO: Implement the webhooks to listen to the events for the created CR
         }
 
         }
