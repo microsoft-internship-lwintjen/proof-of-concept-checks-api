@@ -10,14 +10,9 @@ namespace SampleApp
     class Program
     {
         static string gitHubAppName = "SampleApp";
-        static int githubAppId = 71222;
-        static int installationId = 10217951;
-        static string githubPrivateKeyPath = @".\checks-api-app.2020-07-02.private-key.pem";
-
-        // infos for checks-api (with webhook for CR/CS)
-        //static int githubAppId = 71258;
-        //static int installationId = 10223023;
-        //static string githubPrivateKeyPath = @".\checks-api.2020-07-02.private-key.pem";
+        static int githubAppId = 71333;
+        static int installationId = 10239152;
+        static string githubPrivateKeyPath = @".\checks-api-pocca.2020-07-02.private-key.pem";
         
         public static IGitHubClient GetGitHubClient()
         {
@@ -77,7 +72,6 @@ namespace SampleApp
         {
             Console.WriteLine("Setting up the GitHub client...");
             var client = await GetGitHubInstallationClient(installationId);
-            //var client = new GitHubClient(new ProductHeaderValue("SampleApp"));
 
             Console.Write("Please, enter your github username: ");
             string username = Console.ReadLine();
@@ -133,7 +127,9 @@ namespace SampleApp
 
             PullRequest PR = AllPRs[PRId - 1];
 
+            var newCheckSuite = new NewCheckSuite(PR.Head.Sha);
             var newCheckRun = new NewCheckRun("sample check run", PR.Head.Sha);
+            //var CS = await client.Check.Suite.Create(repo.Id, newCheckSuite);
             var CR = await client.Check.Run.Create(repo.Id, newCheckRun);
             var checkRun = await client.Check.Run.Create(repo.Owner.Login,repo.Name, newCheckRun);
             //var createdCheckSuite = await client.Check.Suite.Create(PR.Id, checkSuite);
