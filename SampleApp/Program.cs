@@ -73,11 +73,6 @@ namespace SampleApp
             Console.WriteLine("Setting up the GitHub client...");
             var client = await GetGitHubInstallationClient(installationId);
 
-            Console.Write("Please, enter your github username: ");
-            string username = Console.ReadLine();
-               
-            var user = await client.User.Get(username);
-
             Console.Write("Please, enter the name of the organization you want to find the PR in : ");
             string orgName = Console.ReadLine();
 
@@ -127,13 +122,35 @@ namespace SampleApp
 
             PullRequest PR = AllPRs[PRId - 1];
 
-            var newCheckSuite = new NewCheckSuite(PR.Head.Sha);
-            var newCheckRun = new NewCheckRun("sample check run", PR.Head.Sha);
+            // it automatically creates a check suite when we create a check run so we dont need to do it ourselves
+            //var newCheckSuite = new NewCheckSuite(PR.Head.Sha);
             //var CS = await client.Check.Suite.Create(repo.Id, newCheckSuite);
-            var CR = await client.Check.Run.Create(repo.Id, newCheckRun);
-            var checkRun = await client.Check.Run.Create(repo.Owner.Login,repo.Name, newCheckRun);
-            //var createdCheckSuite = await client.Check.Suite.Create(PR.Id, checkSuite);
 
+            var CS = await client.Check.Suite.GetAllForReference(repo.Id, PR.Head.Sha);
+
+            Console.WriteLine(CS.TotalCount);
+
+            var newCheckRun = new NewCheckRun("sample check run", PR.Head.Sha);
+            
+            var CR = await client.Check.Run.Create(repo.Id, newCheckRun);
+            
+            string currentStatus = CR.Status.StringValue;
+            
+            Console.WriteLine("Check run created, please wait while your check run has been processed");
+
+            while (CR.Status.StringValue.CompareTo("completed") != 0)
+            {
+                CR = await client.Check.Run.Get(repo.Id, CR.Id);
+                Console.WriteLine(CR.Status.StringValue);
+                if (CR.Status.StringValue.CompareTo(currentStatus) != 0)
+                {
+                    currentStatus = CR.Status.StringValue;
+                }
+            }
+
+            Console.WriteLine("The check run has been processed");
+
+            // TO DO: Implement the webhooks to listen to the events for the created CR
         }
 
         }
