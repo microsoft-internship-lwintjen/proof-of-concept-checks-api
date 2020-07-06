@@ -6,8 +6,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DotNetEnv" Version="1.4.0" />
+    <None Remove="checks-api-app.2020-07-02.private-key.pem" />
+    <None Remove="checks-api-pocca.2020-07-02.private-key.pem" />
+    <None Remove="checks-api.2020-07-02.private-key.pem" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GitHubJwt" Version="0.0.4" />
     <PackageReference Include="Octokit" Version="0.48.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="checks-api-pocca.2020-07-02.private-key.pem">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
