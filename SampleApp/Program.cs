@@ -135,10 +135,63 @@ namespace SampleApp
                 {
                     Console.Write("Please type in the name of your check run : ");
                     string CRName = Console.ReadLine();
-
+                    
                     var newCheckRun = new NewCheckRun(CRName, PR.Head.Sha);
+
+                    Console.Write("Title of the output : ");
+                    string titleOutput = Console.ReadLine();
+                    Console.Write("Summary of the output : ");
+                    string summaryOutput = Console.ReadLine();
+
+                    var CROutput = new NewCheckRunOutput(titleOutput, summaryOutput);
+                    newCheckRun.Output = CROutput;
+
+                    Console.WriteLine("You can add as many annotations as you want for that check. Write 'Stop' when we ask for the path of the file to stop adding an annotation to the check.");
+
+                    // set the initial annotationPath to an empty string to run atleast once the while loop
+                    string annotationPath = "";
+                    var allAnnotations = new List<NewCheckRunAnnotation>();
+
+                    while (true) {
+                    
+                    Console.Write("Path of the file to add an annotation to (Write 'Stop' to leave): ");
+                    annotationPath = Console.ReadLine();
+                    if (annotationPath.CompareTo("Stop") == 0)
+                    {
+                        break;
+                    }
+
+                    Console.Write("The start line of the annotation: ");
+                    int startLineAnnotation = Convert.ToInt32(Console.ReadLine());
+
+                    Console.Write("The end line of the annotation: ");
+                    int endLineAnnotation = Convert.ToInt32(Console.ReadLine());
+
+                    Console.Write("The level of the annotation (notice: 0, warning: 1, failure: 2): ");
+                    int levelAnnotationInput = Convert.ToInt32(Console.ReadLine());
+
+                    var levelAnnotation = CheckAnnotationLevel.Failure;
+
+                    if (levelAnnotationInput == 0)
+                    {
+                        levelAnnotation = CheckAnnotationLevel.Notice;
+                    }
+                    else if (levelAnnotationInput == 1)
+                    {
+                        levelAnnotation = CheckAnnotationLevel.Warning;
+                    }
+
+                    Console.Write("The message of the annotation: ");
+                    string msgAnnotation = Console.ReadLine();
+
+                    
+                    allAnnotations.Add(new NewCheckRunAnnotation(annotationPath, startLineAnnotation, endLineAnnotation, levelAnnotation, msgAnnotation));
+                    }
+
+                    CROutput.Annotations = allAnnotations;
                     var CR = await client.Check.Run.Create(repo.Id, newCheckRun);
 
+                    
                 }
 
                 // Updating an existing one
@@ -149,22 +202,33 @@ namespace SampleApp
                     Console.Write("Type in the id of the CR ('/pull/[pull_request_id]/checks?check_run_id=[check_run_id]') : ");
                     long CRId = long.Parse(Console.ReadLine());
 
-                    Console.Write("Please, type in the status (queued, in_progress, completed) of check run {0} : ", CRId );
-                    string status = Console.ReadLine();
+                    Console.Write("Please, type in the number of the status (queued : 0, in_progress : 1, completed : 2) of check run {0} : ", CRId );
+                    int status = Convert.ToInt32(Console.ReadLine());
 
-                    CRUpdate.Status = status;
-                    
-                    // if completed then need extra infos
-                    if (status.CompareTo("completed") == 0)
+                    if (status == 0)
                     {
+                        CRUpdate.Status = CheckStatus.Queued;
+                    }
+                    else if (status == 1)
+                    {
+                        CRUpdate.Status = CheckStatus.InProgress;
+                    }
+
+                    // if completed then need extra infos
+                    else
+                    {
+                        CRUpdate.Status = CheckStatus.Completed;
+
                         Console.Write("Result of the check (success, failure, neutral, cancelled, timed_out, action_required) : ");
                         string checkRunResult = Console.ReadLine();
+
+                        Console.Write("Annotations of the check : ");
+                        string annotations = Console.ReadLine();
 
                         DateTime now = DateTime.Now;
 
                         CRUpdate.Conclusion = checkRunResult;
                         CRUpdate.CompletedAt = now;
-
                     }
 
                     await client.Check.Run.Update(repo.Id, CRId, CRUpdate);
