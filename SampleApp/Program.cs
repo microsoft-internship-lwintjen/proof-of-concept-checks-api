@@ -136,6 +136,8 @@ namespace SampleApp
                     "3. Leave the program");
                 string action = Console.ReadLine();
 
+                var allAnnotations = new List<NewCheckRunAnnotation>();
+
                 // Creating a new CR
                 if (action.CompareTo("1") == 0)
                 {
@@ -156,8 +158,7 @@ namespace SampleApp
 
                     // set the initial annotationPath to an empty string to run atleast once the while loop
                     string annotationPath = "";
-                    var allAnnotations = new List<NewCheckRunAnnotation>();
-
+                    
                     while (true) {
                     
                     Console.Write("Path of the file to add an annotation to (Write 'Stop' to leave): ");
@@ -190,7 +191,6 @@ namespace SampleApp
                     Console.Write("The message of the annotation: ");
                     string msgAnnotation = Console.ReadLine();
 
-                    
                     allAnnotations.Add(new NewCheckRunAnnotation(annotationPath, startLineAnnotation, endLineAnnotation, levelAnnotation, msgAnnotation));
                     }
 
@@ -228,11 +228,35 @@ namespace SampleApp
                         Console.Write("Result of the check (success, failure, neutral, cancelled, timed_out, action_required) : ");
                         string checkRunResult = Console.ReadLine();
 
-                        Console.Write("Annotations of the check : ");
-                        string annotations = Console.ReadLine();
+                        if (checkRunResult.CompareTo("action_required") == 0)
+                        {
+                            string labelAction = "";
+                            var actions = new List<NewCheckRunAction>();
+
+                            while (actions.Count != 3)
+                            {
+                                Console.Write("Label of the action ('Stop' to exit): ");
+                                labelAction = Console.ReadLine();
+
+                                if (labelAction.CompareTo("Stop") == 0)
+                                {
+                                    break;
+                                }
+
+                                Console.Write("Description of the action: ");
+                                string descriptionAction = Console.ReadLine();
+
+                                Console.Write("Identifier of the action: ");
+                                string identifierAction = Console.ReadLine();
+
+                                actions.Add(new NewCheckRunAction(labelAction, descriptionAction, identifierAction));
+                            }
+                            CRUpdate.Actions = actions;
+                        }
 
                         DateTime now = DateTime.Now;
 
+                        
                         CRUpdate.Conclusion = checkRunResult;
                         CRUpdate.CompletedAt = now;
                     }
