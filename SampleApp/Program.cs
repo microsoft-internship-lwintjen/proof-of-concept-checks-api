@@ -120,8 +120,14 @@ namespace SampleApp
 
             var AllPRs = await client.PullRequest.GetAllForRepository(repo.Id);
 
-            PullRequest PR = AllPRs[PRId - 1];
+            while (PRId > AllPRs.Count || PRId <= 0)
+            {
+                Console.Write($"Incorrect value, please, enter the id of the PR in {repoName} (you'll find it in the url of the PR '/pull/[id]') : ");
+                PRId = Convert.ToInt32(Console.ReadLine());
+            }
 
+            PullRequest PR = AllPRs[PRId - 1];
+            
             while (true)
             {
                 Console.WriteLine("What do you want to do (type in the number of the action) ?\n " +
@@ -135,7 +141,7 @@ namespace SampleApp
                 {
                     Console.Write("Please type in the name of your check run : ");
                     string CRName = Console.ReadLine();
-                    
+
                     var newCheckRun = new NewCheckRun(CRName, PR.Head.Sha);
 
                     Console.Write("Title of the output : ");
